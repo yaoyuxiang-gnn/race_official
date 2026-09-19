@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+
+# 运行时产物
+benchmarks/data/
+analysis/data/
+checkpoints/
+results/
+
+# macOS 元数据
+.DS_Store
+._*
+
+.idea/
