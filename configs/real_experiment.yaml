@@ -1,0 +1,18 @@
+# Default values for the real_data_experiment.py command-line interface.
+# These are loaded as the argparse defaults; the flags themselves are unchanged.
+
+dataset: acm
+cap: 50000
+seeds: [0, 1, 2, 3, 4]
+hidden_dim: 32
+num_layers: 2
+backbone_steps: 300
+explain_steps: 150
+lr: 0.01
+explain_lr: 0.1
+sparsity: 0.05
+gumbel_tau: 1.0
+dropout: 0.5
+weight_decay: 0.0005
+tau_rel: 0.9
+tau_rel_scan: [0.5, 0.7, 0.9, 1.0]

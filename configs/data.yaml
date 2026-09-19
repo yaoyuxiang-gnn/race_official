@@ -1,0 +1,27 @@
+# Dataset locations and instance-sampling parameters.
+# Read by real_data_experiment.py and passed explicitly to the loaders.
+# Per spec.md Sec. 2.7, data lives under code/data/ (relative to the code/ dir
+# where the experiments are executed).
+
+cora:
+  cache_dir: data/cora
+acm_han:
+  mat_path: data/ACM.mat
+  seed: 0
+hgb:
+  root: data/hgb
+  seed: 0
+mag:
+  root: data/ogb
+  n_papers: 30000
+  n_venues: 20
+  seed: 0
+arxiv:
+  root: data/ogb
+  n_nodes: 30000
+  n_classes: 20
+  seed: 0
+dblp:
+  root: data/dblp
+  topk: 12
+  seed: 0
