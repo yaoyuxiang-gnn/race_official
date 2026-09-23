@@ -1,93 +1,93 @@
-# RACE: 异构图关系感知反事实解释
+# RACE: Relation-Aware Counterfactual Explanation for Heterogeneous Graphs
 
-RACE（Relation-Aware Counterfactual Explanation）是一个面向异构图神经网络的反事实解释框架。给定一个已训练的节点分类模型，RACE 在**关系类型**层面回答"移除哪些类型的边会改变模型的预测"，并支持从关系类型到具体边的分层下钻，兼顾解释的最小性、稳定性与计算效率。
+RACE (Relation-Aware Counterfactual Explanation) is a counterfactual explanation framework for heterogeneous graph neural networks. Given a trained node classification model, RACE answers at the **relation type** level the question "removing which types of edges would change the model's prediction", and supports hierarchical drill-down from relation types to concrete edges, balancing minimality, stability, and computational efficiency of the explanations.
 
-## 项目架构
+## Project Architecture
 
 ```
 code_refactored/
-├── model/                          # 核心包：骨干网络 + 解释器
-│   ├── hetero_gnn.py               # RACE 异构 GNN 骨干（关系加权消息传递）
-│   ├── han_hgt.py                  # HAN / HGT / GCN / GAT / RGCN 骨干
-│   ├── counterfactual_explainer.py # 逐边反事实解释器（Gumbel-Sigmoid 掩码）
-│   ├── relation_type_explainer.py  # 关系类型级解释器（穷举搜索 + 可微松弛）
-│   ├── instance_relation_explainer.py  # 实例级关系搜索 S_v*（逐节点精确翻转）
-│   ├── hierarchical_explainer.py   # 分层解释器（关系搜索 → 边级剪枝下钻）
-│   └── data/                       # 数据集加载器
-│       ├── cora.py                 # Cora（自动下载，2 关系）
-│       ├── acm_han.py              # ACM（HAN 版，PAP/PTP 2 关系）
-│       ├── hgb.py                  # HGB ACM / DBLP（PyG 自动下载）
-│       ├── ogbn_mag.py / mag4.py   # ogbn-mag 子采样（2 / 4 关系）
-│       ├── arxiv.py                # ogbn-arxiv（2 关系）
+├── model/                          # Core package: backbones + explainers
+│   ├── hetero_gnn.py               # RACE heterogeneous GNN backbone (relation-weighted message passing)
+│   ├── han_hgt.py                  # HAN / HGT / GCN / GAT / RGCN backbones
+│   ├── counterfactual_explainer.py # Per-edge counterfactual explainer (Gumbel-Sigmoid mask)
+│   ├── relation_type_explainer.py  # Relation-type-level explainer (exhaustive search + differentiable relaxation)
+│   ├── instance_relation_explainer.py  # Instance-level relation search S_v* (exact per-node flip)
+│   ├── hierarchical_explainer.py   # Hierarchical explainer (relation search → edge-level pruning drill-down)
+│   └── data/                       # Dataset loaders
+│       ├── cora.py                 # Cora (auto-download, 2 relations)
+│       ├── acm_han.py              # ACM (HAN version, PAP/PTP 2 relations)
+│       ├── hgb.py                  # HGB ACM / DBLP (auto-download via PyG)
+│       ├── ogbn_mag.py / mag4.py   # ogbn-mag subsampling (2 / 4 relations)
+│       ├── arxiv.py                # ogbn-arxiv (2 relations)
 │       ├── dblp_classic.py         # DBLP classic
-│       └── synthetic.py / scm_synthetic.py  # 合成数据（含真值因果关系）
+│       └── synthetic.py / scm_synthetic.py  # Synthetic data (with ground-truth causality)
 ├── benchmarks/
-│   └── baselines.py                # 基线：GNNExplainer / CF-GNNExplainer / PNS /
+│   └── baselines.py                # Baselines: GNNExplainer / CF-GNNExplainer / PNS /
 │                                   # PGExplainer / RCExplainer / CF² / MEG /
-│                                   # SubgraphX / GradCAM / IG / RACE-v2 等
+│                                   # SubgraphX / GradCAM / IG / RACE-v2, etc.
 ├── analysis/
-│   └── metrics.py                  # 评估指标（accuracy、CSR、PS/PNS 等）
+│   └── metrics.py                  # Evaluation metrics (accuracy, CSR, PS/PNS, etc.)
 ├── configs/
-│   ├── data.yaml                   # 数据集路径与采样参数
-│   └── real_experiment.yaml        # 实验默认超参数（作为 CLI 默认值加载）
-├── utils.py                        # 公共工具：种子设置、骨干训练、模型构建、数据加载
-├── real_data_experiment.py         # 入口①：真实数据五方法主对比实验
-├── synthetic_experiment.py         # 入口②：合成数据真值验证（A/B/C 三部分）
-├── instance_experiment.py          # 入口③：实例级关系反事实搜索（训练并冻结骨干）
-├── race_v2_experiment.py           # 入口④：RACE-v2 逐边解释器（margin 损失 + 离散验证 + 剪枝）
-├── hierarchical_experiment.py      # 入口⑤：分层解释 vs 扁平基线
-├── baselines_experiment.py         # 入口⑥：扩展基线对比 + 骨干精度对照
+│   ├── data.yaml                   # Dataset paths and sampling parameters
+│   └── real_experiment.yaml        # Default experiment hyperparameters (loaded as CLI defaults)
+├── utils.py                        # Common utilities: seeding, backbone training, model building, data loading
+├── real_data_experiment.py         # Entry ①: main real-data comparison of five methods
+├── synthetic_experiment.py         # Entry ②: synthetic ground-truth validation (parts A/B/C)
+├── instance_experiment.py          # Entry ③: instance-level relation counterfactual search (train and freeze backbone)
+├── race_v2_experiment.py           # Entry ④: RACE-v2 per-edge explainer (margin loss + discrete validation + pruning)
+├── hierarchical_experiment.py      # Entry ⑤: hierarchical explanation vs flat baselines
+├── baselines_experiment.py         # Entry ⑥: extended baseline comparison + backbone accuracy reference
 ├── requirements.txt
 └── README.md
 ```
 
-**运行流程**：每个入口脚本负责"训练骨干 → 冻结 → 在其上运行解释器 → 计算指标"的完整流水线。训练产物按 seed 分目录保存：指标写入 `results{tag}/seed_{s}/...`，模型权重写入 `checkpoints{tag}/seed_{s}/...`（运行时自动创建，均已约定为不入库的中间产物）。
+**Workflow**: each entry script runs the full pipeline of "train backbone → freeze → run explainers on top → compute metrics". Training artifacts are saved in per-seed directories: metrics are written to `results{tag}/seed_{s}/...`, and model weights to `checkpoints{tag}/seed_{s}/...` (created automatically at runtime; both are designated intermediate artifacts that are not committed to the repo).
 
-## 环境安装
+## Environment Setup
 
 ```bash
 pip install -r requirements.txt
 ```
 
-依赖：`torch`、`torch_geometric`、`numpy`、`scipy`、`PyYAML`。
+Dependencies: `torch`, `torch_geometric`, `numpy`, `scipy`, `PyYAML`.
 
-- 如需运行 `mag` / `mag4` / `arxiv` 数据集，额外安装 `pip install ogb`（懒加载，仅这些数据集需要）。
-- GPU 非必需，所有脚本支持 `--device cpu`（默认 `auto` 自动检测）。
+- To run the `mag` / `mag4` / `arxiv` datasets, additionally install `pip install ogb` (lazy-loaded; only needed for these datasets).
+- A GPU is not required; all scripts support `--device cpu` (default `auto` detects the device automatically).
 
-## 数据准备
+## Data Preparation
 
-数据默认存放于 `data/` 目录（相对于项目根，路径可在 `configs/data.yaml` 中修改）：
+Data is stored under the `data/` directory by default (relative to the project root; paths can be modified in `configs/data.yaml`):
 
-| 数据集 | 获取方式 |
+| Dataset | How to obtain |
 |---|---|
-| Cora | 首次运行时自动从 GitHub 下载 |
-| HGB ACM / DBLP | 由 PyG `HGBDataset` 自动下载 |
-| ogbn-mag / ogbn-arxiv | 由 `ogb` 库自动下载（需先安装 `ogb`） |
-| ACM（HAN 版） | 手动下载 `ACM.mat`（托管于 `data.dgl.ai`）并放到 `data/ACM.mat` |
-| 合成数据 | 代码内生成，无需下载 |
+| Cora | Automatically downloaded from GitHub on first run |
+| HGB ACM / DBLP | Automatically downloaded via PyG `HGBDataset` |
+| ogbn-mag / ogbn-arxiv | Automatically downloaded via the `ogb` library (requires `ogb` to be installed first) |
+| ACM (HAN version) | Manually download `ACM.mat` (hosted at `data.dgl.ai`) and place it at `data/ACM.mat` |
+| Synthetic data | Generated in code, no download needed |
 
-## 快速启动
+## Quick Start
 
-在项目根目录（`code_refactored/`）下运行。所有入口均支持 `--seeds`、`--dataset`、`--device` 等参数，默认值取自 `configs/real_experiment.yaml`，可用 `--help` 查看完整参数列表。
+Run from the project root (`code_refactored/`). All entries support arguments such as `--seeds`, `--dataset`, and `--device`; default values come from `configs/real_experiment.yaml`. Use `--help` to see the full argument list.
 
 ```bash
-# ① 真实数据主对比（GNNExplainer / CF-GNNExplainer / PNS / Ours 两种粒度）
+# ① Main real-data comparison (GNNExplainer / CF-GNNExplainer / PNS / Ours at two granularities)
 python real_data_experiment.py --dataset acm --seeds 0 1 2 3 4
 
-# ② 合成数据真值验证（关系识别命中率、五方法对比、PN/PS/PNS 验证）
+# ② Synthetic ground-truth validation (relation identification hit rate, five-method comparison, PN/PS/PNS validation)
 python synthetic_experiment.py --part ABC --seeds 0 1 2 3 4
 
-# ③ 实例级关系搜索（同时产出冻结骨干 checkpoints{tag}/seed_{s}/backbone.pt）
+# ③ Instance-level relation search (also produces the frozen backbone checkpoints{tag}/seed_{s}/backbone.pt)
 python instance_experiment.py --dataset acm --seeds 0 1 2 --tag v2
 
-# ④ RACE-v2 逐边解释器（复用 ③ 的冻结骨干）
+# ④ RACE-v2 per-edge explainer (reuses the frozen backbone from ③)
 python race_v2_experiment.py --dataset acm --seeds 0 1 2 --tag v2 --variant v0 --reuse_ckpt
 
-# ⑤ 分层解释 vs 扁平基线
+# ⑤ Hierarchical explanation vs flat baselines
 python hierarchical_experiment.py --dataset acm --seeds 0 1 2 --tag v2
 
-# ⑥ 扩展基线（PGExplainer / RCExplainer / CF² / MEG / 梯度归因等）
+# ⑥ Extended baselines (PGExplainer / RCExplainer / CF² / MEG / gradient attribution, etc.)
 python baselines_experiment.py --dataset acm --seeds 0 1 2 3 4
 ```
 
-可选数据集：`acm`（默认）、`cora`、`mag`、`ACM`、`DBLP`（HGB）、`mag4`、`arxiv`、`dblp`（各脚本支持范围略有差异，以 `--help` 为准）。可选骨干：`hetero`（RACE 默认）、`han`、`hgt`、`rgcn`。
+Available datasets: `acm` (default), `cora`, `mag`, `ACM`, `DBLP` (HGB), `mag4`, `arxiv`, `dblp` (each script supports a slightly different subset; refer to `--help`). Available backbones: `hetero` (RACE default), `han`, `hgt`, `rgcn`.

@@ -167,7 +167,7 @@ def part_b(args, device):
     methods = ["GNNExplainer", "CF-GNNExplainer", "PNS", "Ours(per-edge)", "Ours(rel-type)"]
     metrics = ["backbone_acc", "csr", "minimality", "ps", "pns"]
     print(f"\n===== Synthetic main results (mean±std over {args.seeds}) =====")
-    print("| 方法 | " + " | ".join(metrics) + " |")
+    print("| Method | " + " | ".join(metrics) + " |")
     print("|" + "---|" * (len(metrics) + 1) + "|")
     summary = {}
     for m in methods:

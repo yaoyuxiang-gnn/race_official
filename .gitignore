@@ -2,13 +2,13 @@
 __pycache__/
 *.pyc
 
-# 运行时产物
+# Runtime artifacts
 benchmarks/data/
 analysis/data/
 checkpoints/
 results/
 
-# macOS 元数据
+# macOS metadata
 .DS_Store
 ._*
 

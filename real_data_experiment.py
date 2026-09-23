@@ -288,7 +288,7 @@ def main() -> None:
     methods = [m for m in methods if isinstance(first.get(m), dict) and "backbone_acc" in first[m]]
 
     print(f"\n===== Real-data results ({args.dataset}, mean±std over {args.seeds}) =====")
-    print("| 方法 | " + " | ".join(metrics) + " | 参数量 | 耗时(s) |")
+    print("| Method | " + " | ".join(metrics) + " | Params | Time(s) |")
     print("|" + "---|" * (len(metrics) + 2) + "|")
     for m in methods:
         vals = {k: [per_seed[s][m][k] for s in args.seeds] for k in metrics}
